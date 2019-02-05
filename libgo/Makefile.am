@@ -439,6 +439,7 @@ endif
 
 runtime_files = \
 	runtime/aeshash.c \
+	runtime/context.S \
 	runtime/go-assert.c \
 	runtime/go-caller.c \
 	runtime/go-callers.c \
@@ -806,6 +807,12 @@ BUILDPACKAGE = \
 	files=`echo $^ | sed -e 's/[^ ]*\.gox//g' -e 's/[^ ]*\.dep//'`; \
 	$(LTGOCOMPILE) -I . -c -fgo-pkgpath=`echo $@ | sed -e 's/.lo$$//'` $($(subst -,_,$(subst .,_,$(subst /,_,$@)))_GOCFLAGS) -o $@ $$files
 
+if LIBGO_IS_DARWIN
+GO_EXPORT_SECTION = __GNU_GO.__go_export
+else
+GO_EXPORT_SECTION = .go_export
+endif
+
 # How to build a .gox file from a .lo file.
 # Matching .o file can either be in the same directory as the .lo (non-PIC
 # object) or in the .libs directory (PIC object).
@@ -814,7 +821,7 @@ BUILDGOX = \
 	if test ! -f $$f; then \
 	  f="$(basename $(<D)/.libs/$(<F)).o"; \
 	fi; \
-	$(OBJCOPY) -j .go_export $$f $@.tmp; \
+	$(OBJCOPY) -j $(GO_EXPORT_SECTION) $$f $@.tmp; \
 	$(SHELL) $(srcdir)/mvifdiff.sh $@.tmp `echo $@ | sed -e 's/s-gox/gox/'`
 
 GOTESTFLAGS =

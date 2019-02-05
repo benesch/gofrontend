@@ -14,7 +14,9 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#ifndef __APPLE__
 #include <ucontext.h>
+#endif
 #include <netinet/in.h>
 /* <netinet/tcp.h> needs u_char/u_short, but <sys/bsd_types> is only
    included by <netinet/in.h> if _SGIAPI (i.e. _SGI_SOURCE

@@ -22,7 +22,7 @@ for pattern in '_[GP][a-z]' _Max _Lock _Sig _Trace _MHeap _Num
 do
   grep "#define $pattern" ${IN} >> runtime.inc.tmp2
 done
-TYPES="_Complex_lock _Reader_lock semt"
+TYPES="_Complex_lock _Reader_lock semt _DIR"
 for TYPE in $TYPES
 do
   sed -e '/struct '${TYPE}' {/,/^}/s/^.*$//' runtime.inc.tmp2 > runtime.inc.tmp3;

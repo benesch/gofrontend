@@ -6,6 +6,8 @@
 
 package x509
 
+import "errors"
+
 /*
 #cgo CFLAGS: -mmacosx-version-min=10.10 -D__MAC_OS_X_VERSION_MAX_ALLOWED=101300
 #cgo LDFLAGS: -framework CoreFoundation -framework Security
@@ -266,11 +268,11 @@ int FetchPEMRoots(CFDataRef *pemRoots, CFDataRef *untrustedPemRoots, bool debugD
 	*untrustedPemRoots = combinedUntrustedData;
 	return 0;
 }
-*/
-import "C"
-import (
-	"errors"
-	"unsafe"
+
+// import "C"
+// import (
+// 	"errors"
+// 	"unsafe"
 )
 
 func loadSystemRoots() (*CertPool, error) {
@@ -301,4 +303,9 @@ func loadSystemRoots() (*CertPool, error) {
 		}
 	}
 	return trustedRoots, nil
+}
+*/
+
+func loadSystemRoots() (*CertPool, error) {
+	return nil, errors.New("XXX TODO")
 }

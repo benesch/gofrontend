@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#include <mach-o/getsect.h>
 
 #ifdef HAVE_FPU_CONTROL_H
 #include <fpu_control.h>
@@ -31,7 +32,9 @@ extern char **environ;
 /* A copy of _end that a shared library can reasonably refer to.  */
 uintptr __go_end;
 
+#ifndef __APPLE__
 extern byte _end[];
+#endif
 
 /* The main function.  */
 
@@ -47,7 +50,11 @@ main (int argc, char **argv)
   if (runtime_iscgo)
     setIsCgo ();
 
+#ifdef __APPLE__
+  __go_end = (uintptr) get_end();
+#else
   __go_end = (uintptr)_end;
+#endif
   runtime_cpuinit ();
   runtime_check ();
   runtime_args (argc, (byte **) argv);

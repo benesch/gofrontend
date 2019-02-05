@@ -156,7 +156,7 @@ struct args {
   char **argv;
 };
 
-#ifndef _AIX
+#if !defined(_AIX) && !defined(__APPLE__)
 /* We use .init_array so that we can get the command line arguments.
    This obviously assumes .init_array support; different systems may
    require other approaches.  */

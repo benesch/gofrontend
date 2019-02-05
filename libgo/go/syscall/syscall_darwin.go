@@ -17,3 +17,9 @@ func direntReclen(buf []byte) (uint64, bool) {
 func direntNamlen(buf []byte) (uint64, bool) {
 	return readInt(buf, unsafe.Offsetof(Dirent{}.Namlen), unsafe.Sizeof(Dirent{}.Namlen))
 }
+
+const NET_RT_DUMP = _NET_RT_DUMP
+const NET_RT_IFLIST = _NET_RT_IFLIST
+const NET_RT_IFLIST2 = _NET_RT_IFLIST2
+
+const AI_MASK = AI_PASSIVE | AI_CANONNAME | AI_NUMERICHOST | AI_NUMERICSERV | AI_ADDRCONFIG

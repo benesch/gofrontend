@@ -198,3 +198,8 @@ grep '^type _kevent ' gen-sysinfo.go | \
     sed -e s'/_kevent/keventt/' \
       -e 's/ udata [^;}]*/ udata *byte/' \
     >> ${OUT}
+
+# The macOS pthread-related structs.
+grep '^type _pthread_[^_]*_t ' gen-sysinfo.go | \
+    sed -e 's/_pthread_\([^_]*\)_t/pthread\1/g' \
+    >> ${OUT}

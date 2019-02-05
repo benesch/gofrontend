@@ -20,14 +20,14 @@ func unimplemented(name string) {
 
 //go:nosplit
 func semacreate(mp *m) {
-	if mp.initialized {
+	if mp.mos.initialized {
 		return
 	}
-	mp.initialized = true
-	if err := pthread_mutex_init(&mp.mutex, nil); err != 0 {
+	mp.mos.initialized = true
+	if err := pthread_mutex_init(&mp.mos.mutex, nil); err != 0 {
 		throw("pthread_mutex_init")
 	}
-	if err := pthread_cond_init(&mp.cond, nil); err != 0 {
+	if err := pthread_cond_init(&mp.mos.cond, nil); err != 0 {
 		throw("pthread_cond_init")
 	}
 }
@@ -39,38 +39,38 @@ func semasleep(ns int64) int32 {
 		start = nanotime()
 	}
 	mp := getg().m
-	pthread_mutex_lock(&mp.mutex)
+	pthread_mutex_lock(&mp.mos.mutex)
 	for {
-		if mp.count > 0 {
-			mp.count--
-			pthread_mutex_unlock(&mp.mutex)
+		if mp.mos.count > 0 {
+			mp.mos.count--
+			pthread_mutex_unlock(&mp.mos.mutex)
 			return 0
 		}
 		if ns >= 0 {
 			spent := nanotime() - start
 			if spent >= ns {
-				pthread_mutex_unlock(&mp.mutex)
+				pthread_mutex_unlock(&mp.mos.mutex)
 				return -1
 			}
 			var t timespec
-			t.set_nsec(ns - spent)
-			err := pthread_cond_timedwait_relative_np(&mp.cond, &mp.mutex, &t)
+			t.set_nsec(int32(ns - spent))
+			err := pthread_cond_timedwait_relative_np(&mp.mos.cond, &mp.mos.mutex, &t)
 			if err == _ETIMEDOUT {
-				pthread_mutex_unlock(&mp.mutex)
+				pthread_mutex_unlock(&mp.mos.mutex)
 				return -1
 			}
 		} else {
-			pthread_cond_wait(&mp.cond, &mp.mutex)
+			pthread_cond_wait(&mp.mos.cond, &mp.mos.mutex)
 		}
 	}
 }
 
 //go:nosplit
 func semawakeup(mp *m) {
-	pthread_mutex_lock(&mp.mutex)
-	mp.count++
-	if mp.count > 0 {
-		pthread_cond_signal(&mp.cond)
+	pthread_mutex_lock(&mp.mos.mutex)
+	mp.mos.count++
+	if mp.mos.count > 0 {
+		pthread_cond_signal(&mp.mos.cond)
 	}
-	pthread_mutex_unlock(&mp.mutex)
+	pthread_mutex_unlock(&mp.mos.mutex)
 }

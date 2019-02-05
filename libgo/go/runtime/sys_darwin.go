@@ -4,7 +4,31 @@
 
 package runtime
 
-import "unsafe"
+import _ "unsafe" // for go:linkanme
+
+//go:linkname pthread_mutex_init pthread_mutex_init
+func pthread_mutex_init(m *pthreadmutex, attr *pthreadmutexattr) int32
+
+//go:linkname pthread_mutex_lock pthread_mutex_lock
+func pthread_mutex_lock(m *pthreadmutex) int32
+
+//go:linkname pthread_mutex_unlock pthread_mutex_unlock
+func pthread_mutex_unlock(m *pthreadmutex) int32
+
+//go:linkname pthread_cond_init pthread_cond_init
+func pthread_cond_init(c *pthreadcond, attr *pthreadcondattr) int32
+
+//go:linkname pthread_cond_signal pthread_cond_signal
+func pthread_cond_signal(c *pthreadcond) int32
+
+//go:noescape
+//go:linkname pthread_cond_timedwait_relative_np pthread_cond_timedwait_relative_np
+func pthread_cond_timedwait_relative_np(c *pthreadcond, m *pthreadmutex, t *timespec) int32
+
+//go:linkname pthread_cond_wait pthread_cond_wait
+func pthread_cond_wait(c *pthreadcond, m *pthreadmutex) int32
+
+/*
 
 // Call fn with arg as its argument. Return what fn returns.
 // fn is the raw pc value of the entry point of the desired function.
@@ -427,3 +451,4 @@ func closeonexec(fd int32) {
 // Magic incantation to get libSystem actually dynamically linked.
 // TODO: Why does the code require this?  See cmd/link/internal/ld/go.go
 //go:cgo_import_dynamic _ _ "/usr/lib/libSystem.B.dylib"
+*/

@@ -8,7 +8,7 @@
 
 #include "runtime.h"
 #include "arch.h"
-#include "malloc.h"
+// #include "malloc.h"
 
 String Signame (intgo sig) __asm__ (GOSYM_PREFIX "syscall.Signame");
 

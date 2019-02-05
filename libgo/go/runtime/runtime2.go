@@ -261,6 +261,17 @@ func setMNoWB(mp **m, new *m) {
 	(*muintptr)(unsafe.Pointer(mp)).set(new)
 }
 
+type gobuf struct {
+	rip uintptr
+	rsp uintptr
+	rdx uintptr
+	rbp uintptr
+	r12 uintptr
+	r13 uintptr
+	r14 uintptr
+	r15 uintptr
+}
+
 // sudog represents a g in a wait list, such as for sending/receiving
 // on a channel.
 //
@@ -352,7 +363,7 @@ type g struct {
 	_panic *_panic // innermost panic - offset known to liblink
 	_defer *_defer // innermost defer
 	m      *m      // current m; offset known to arm liblink
-	// Not for gccgo: sched          gobuf
+	sched          gobuf
 	syscallsp uintptr // if status==Gsyscall, syscallsp = sched.sp to use during gc
 	syscallpc uintptr // if status==Gsyscall, syscallpc = sched.pc to use during gc
 	// Not for gccgo: stktopsp       uintptr        // expected sp at top of stack, to check in traceback
@@ -449,7 +460,6 @@ type g struct {
 
 	traceback uintptr // stack traceback buffer
 
-	context      g_ucontext_t // saved context for setcontext
 	stackcontext [10]uintptr  // split-stack context
 }
 

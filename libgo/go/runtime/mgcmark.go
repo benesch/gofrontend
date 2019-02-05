@@ -654,7 +654,7 @@ func scanstack(gp *g, gcw *gcWork) {
 
 		// Conservatively scan the saved register values.
 		scanstackblock(uintptr(unsafe.Pointer(&gp.gcregs)), unsafe.Sizeof(gp.gcregs), gcw)
-		scanstackblock(uintptr(unsafe.Pointer(&gp.context)), unsafe.Sizeof(gp.context), gcw)
+		scanstackblock(uintptr(unsafe.Pointer(&gp.sched)), unsafe.Sizeof(gp.sched), gcw)
 	}
 
 	gp.gcscanvalid = true
@@ -675,9 +675,9 @@ func scanstackswitch(gp *g, gcw *gcWork) {
 	// context. Preserve it.
 	// The stack scan code may call systemstack, which will modify
 	// gp's context. Preserve it as well so we can resume gp.
-	context := g.context
+	context := g.sched
 	stackcontext := g.stackcontext
-	context2 := gp.context
+	context2 := gp.sched
 	stackcontext2 := gp.stackcontext
 
 	gp.scangcw = uintptr(unsafe.Pointer(gcw))
@@ -685,9 +685,9 @@ func scanstackswitch(gp *g, gcw *gcWork) {
 	doscanstackswitch(g, gp)
 
 	// Restore the contexts.
-	g.context = context
+	g.sched = context
 	g.stackcontext = stackcontext
-	gp.context = context2
+	gp.sched = context2
 	gp.stackcontext = stackcontext2
 	gp.scangcw = 0
 	// gp.scang is already cleared in C code.

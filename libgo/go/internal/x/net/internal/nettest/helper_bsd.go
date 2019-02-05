@@ -8,13 +8,11 @@ package nettest
 
 import (
 	"runtime"
-	"strconv"
-	"strings"
-	"syscall"
 )
 
 var darwinVersion int
 
+/*
 func init() {
 	if runtime.GOOS == "darwin" {
 		// See http://support.apple.com/kb/HT1633.
@@ -28,7 +26,7 @@ func init() {
 		}
 		darwinVersion, _ = strconv.Atoi(ss[0])
 	}
-}
+}*/
 
 func supportsIPv6MulticastDeliveryOnLoopback() bool {
 	switch runtime.GOOS {

@@ -193,6 +193,7 @@ alreadyInCallers()
 int32
 runtime_callers (int32 skip, Location *locbuf, int32 m, bool keep_thunks)
 {
+  return 0;
   struct callers_data data;
   struct backtrace_state* state;
   int32 i;

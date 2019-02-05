@@ -17,7 +17,9 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <semaphore.h>
+#ifndef __APPLE__
 #include <ucontext.h>
+#endif
 
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
@@ -104,9 +106,11 @@ struct FuncVal
 // the name conflict.
 #define timeval go_timeval
 #define timespec go_timespec
+#define uint64_t uint64
 
 #include "runtime.inc"
 
+#undef uint64_t
 #undef timeval
 #undef timespec
 
@@ -509,15 +513,18 @@ runtime_funcfileline (uintptr targetpc, int32 index)
 bool scanstackwithmap(void*)
   __asm__(GOSYM_PREFIX "runtime.scanstackwithmap");
 bool doscanstack(G*, void*)
-  __asm__("runtime.doscanstack");
+  __asm__(GOSYM_PREFIX "runtime.doscanstack");
 
-bool runtime_usestackmaps;
+extern bool runtime_usestackmaps;
 
 bool probestackmaps(void)
-  __asm__("runtime.probestackmaps");
+  __asm__(GOSYM_PREFIX "runtime.probestackmaps");
 
 // This is set to non-zero when calling backtrace_full.  This is used
 // to avoid getting hanging on a recursive lock in dl_iterate_phdr on
 // older versions of glibc when a SIGPROF signal arrives while
 // collecting a backtrace.
 extern uint32 __go_runtime_in_callers;
+
+int go_getcontext(struct gobuf*);
+int go_setcontext(const struct gobuf*);

@@ -6,12 +6,11 @@
 
 package os
 
-import "syscall"
-
 func hostname() (name string, err error) {
-	name, err = syscall.Sysctl("kern.hostname")
-	if err != nil {
-		return "", NewSyscallError("sysctl kern.hostname", err)
-	}
-	return name, nil
+	// XXX
+	// name, err = syscall.Sysctl("kern.hostname")
+	// if err != nil {
+	return "", NewSyscallError("sysctl kern.hostname", err)
+	// }
+	// return name, nil
 }

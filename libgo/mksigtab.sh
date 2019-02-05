@@ -105,6 +105,8 @@ if test "${GOOS}" = "aix"; then
     bits=`grep 'const _NSIG = _NSIG[0-9]*$' gen-sysinfo.go | sed -e 's/.* = _NSIG\([0-9]*\)/\1/'`
     nsig=`grep "const _SIGMAX$bits = [0-9]*$" gen-sysinfo.go | sed -e 's/.* = \([0-9]*\)/\1/'`
     nsig=`expr $nsig + 1`
+elif test "${GOOS}" = "darwin"; then
+    nsig=`grep 'const _*DARWIN_NSIG = [0-9]*$' gen-sysinfo.go | sed -e 's/.* = \([0-9]*\)/\1/'`
 else
     nsig=`grep 'const _*NSIG = [0-9]*$' gen-sysinfo.go | sed -e 's/.* = \([0-9]*\)/\1/'`
     if test -z "$nsig"; then

@@ -7,7 +7,6 @@
 package net
 
 import (
-	"runtime"
 	"syscall"
 )
 
@@ -16,16 +15,16 @@ func maxListenerBacklog() int {
 		n   uint32
 		err error
 	)
-	switch runtime.GOOS {
-	case "darwin":
-		n, err = syscall.SysctlUint32("kern.ipc.somaxconn")
-	case "freebsd":
-		n, err = syscall.SysctlUint32("kern.ipc.soacceptqueue")
-	case "netbsd":
-		// NOTE: NetBSD has no somaxconn-like kernel state so far
-	case "openbsd":
-		n, err = syscall.SysctlUint32("kern.somaxconn")
-	}
+	// switch runtime.GOOS {
+	// case "darwin":
+	// 	n, err = syscall.SysctlUint32("kern.ipc.somaxconn")
+	// case "freebsd":
+	// 	n, err = syscall.SysctlUint32("kern.ipc.soacceptqueue")
+	// case "netbsd":
+	// 	// NOTE: NetBSD has no somaxconn-like kernel state so far
+	// case "openbsd":
+	// 	n, err = syscall.SysctlUint32("kern.somaxconn")
+	// }
 	if n == 0 || err != nil {
 		return syscall.SOMAXCONN
 	}

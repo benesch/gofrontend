@@ -52,6 +52,7 @@ AC_SUBST(enable_static)
 CC_FOR_BUILD=${CC_FOR_BUILD:-gcc}
 AC_SUBST(CC_FOR_BUILD)
 
+AM_PROG_AS
 AC_PROG_AWK
 
 WARN_FLAGS='-Wall -Wextra -Wwrite-strings -Wcast-qual'
