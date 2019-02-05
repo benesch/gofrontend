@@ -72,14 +72,16 @@ BEGIN {
     getline
     line = $0
 
-    if (match(line, "//[a-zA-Z0-9_]+\\([^()]*\\)") == 0) {
+    if (match(line, "//[a-zA-Z0-9_$]+\\([^()]*\\)") == 0) {
 	print "unmatched C line", $0, "after", gofnname | "cat 1>&2"
 	status = 1
 	next
     }
 
     split(line, a, "[ 	(]+")
-    cfnname = substr(a[1], 3, length(a[1]) - 2)
+    cfnnameraw = substr(a[1], 3, length(a[1]) - 2)
+    cfnname = cfnnameraw
+    gsub(/\$/, "__", cfnname)
 
     off = match(line, "\\([^()]*\\)")
     end = index(substr(line, off, length(line) - off + 1), ")")
@@ -95,11 +97,11 @@ BEGIN {
     }
     cfnresult = line
 
-    printf("// Automatically generated wrapper for %s/%s\n", gofnname, cfnname)
+    printf("// Automatically generated wrapper for %s/%s\n", gofnname, cfnnameraw)
     if (!(cfnname in cfns)) {
         cfns[cfnname] = 1
         printf("//go:noescape\n")
-        printf("//extern %s\n", cfnname)
+        printf("//extern %s\n", cfnnameraw)
         printf("func c_%s(%s) %s\n", cfnname, cfnparams, cfnresult)
     }
     printf("func %s(%s) %s%s%s%s{\n",

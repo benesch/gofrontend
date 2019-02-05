@@ -5,17 +5,16 @@
 package work
 
 import (
+	"cmd/go/internal/base"
+	"cmd/go/internal/cfg"
+	"cmd/go/internal/load"
+	"cmd/go/internal/str"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
-
-	"cmd/go/internal/base"
-	"cmd/go/internal/cfg"
-	"cmd/go/internal/load"
-	"cmd/go/internal/str"
 )
 
 // The Gccgo toolchain.
@@ -191,6 +190,23 @@ func gccgoArchive(basedir, imp string) string {
 	afile := filepath.Join(basedir, end)
 	// add "lib" to the final element
 	return filepath.Join(filepath.Dir(afile), "lib"+filepath.Base(afile))
+}
+
+func wholeArchive(afiles ...string) []string {
+	var ldflags []string
+	switch cfg.Goos {
+	case "aix":
+		ldflags = append(ldflags, afiles...)
+	case "darwin":
+		for _, a := range afiles {
+			ldflags = append(ldflags, "-Wl,-force_load", a)
+		}
+	default:
+		ldflags = append(ldflags, "-Wl,--whole-archive")
+		ldflags = append(ldflags, afiles...)
+		ldflags = append(ldflags, "-Wl,--no-whole-archive")
+	}
+	return ldflags
 }
 
 func (tools gccgoToolchain) pack(b *Builder, a *Action, afile string, ofiles []string) error {
@@ -386,22 +402,13 @@ func (tools gccgoToolchain) link(b *Builder, root *Action, out, importcfg string
 		}
 	}
 
-	wholeArchive := []string{"-Wl,--whole-archive"}
-	noWholeArchive := []string{"-Wl,--no-whole-archive"}
-	if cfg.Goos == "aix" {
-		wholeArchive = nil
-		noWholeArchive = nil
-	}
-	ldflags = append(ldflags, wholeArchive...)
-	ldflags = append(ldflags, afiles...)
-	ldflags = append(ldflags, noWholeArchive...)
-
+	ldflags = append(ldflags, wholeArchive(afiles...)...)
 	ldflags = append(ldflags, cgoldflags...)
 	ldflags = append(ldflags, envList("CGO_LDFLAGS", "")...)
 	if root.Package != nil {
 		ldflags = append(ldflags, root.Package.CgoLDFLAGS...)
 	}
-	if cfg.Goos != "aix" {
+	if cfg.Goos != "aix" && cfg.Goos != "darwin" {
 		ldflags = str.StringList("-Wl,-(", ldflags, "-Wl,-)")
 	}
 
@@ -431,7 +438,7 @@ func (tools gccgoToolchain) link(b *Builder, root *Action, out, importcfg string
 	}
 
 	var realOut string
-	goLibBegin := str.StringList(wholeArchive, "-lgolibbegin", noWholeArchive)
+	goLibBegin := wholeArchive("-lgolibbegin")
 	switch buildmode {
 	case "exe":
 		if usesCgo && cfg.Goos == "linux" {

@@ -13,7 +13,8 @@
 #include "lex.h"
 
 // Return whether the character c is OK to use in the assembler.  We
-// only permit ASCII alphanumeric characters, underscore, and dot.
+// only permit ASCII alphanumeric characters, underscore, dollar sign,
+// and dot.
 
 static bool
 char_needs_encoding(char c)
@@ -32,7 +33,7 @@ char_needs_encoding(char c)
     case 'y': case 'z':
     case '0': case '1': case '2': case '3': case '4':
     case '5': case '6': case '7': case '8': case '9':
-    case '_': case '.':
+    case '_': case '.': case '$':
       return false;
     default:
       return true;

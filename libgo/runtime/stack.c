@@ -21,7 +21,7 @@ extern void * __splitstack_find_context (void *context[10], size_t *, void **,
 #pragma GCC optimize ("-fno-optimize-sibling-calls")
 
 extern void scanstackblock(uintptr addr, uintptr size, void *gcw)
-  __asm__("runtime.scanstackblock");
+  __asm__(GOSYM_PREFIX "runtime.scanstackblock");
 
 static bool doscanstack1(G*, void*)
   __attribute__ ((noinline));

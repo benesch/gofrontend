@@ -202,7 +202,7 @@ go_set_results (const struct __go_func_type *func, unsigned char *call_result,
 /* The code that converts the Go type to an FFI type is written in Go,
    so that it can allocate Go heap memory.  */
 extern void ffiFuncToCIF(const struct __go_func_type*, _Bool, _Bool, ffi_cif*)
-  __asm__ ("runtime.ffiFuncToCIF");
+  __asm__ (GOSYM_PREFIX "runtime.ffiFuncToCIF");
 
 /* Call a function.  The type of the function is FUNC_TYPE, and the
    closure is FUNC_VAL.  PARAMS is an array of parameter addresses.
