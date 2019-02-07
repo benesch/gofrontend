@@ -145,11 +145,13 @@ __go_file_line (uintptr pc, int index, String *fn, String *file, intgo *line)
   *file = c.file;
   *line = c.line;
 
+#if BACKTRACE_SUPPORTED
   // If backtrace_pcinfo didn't get the function name from the debug
   // info, try to get it from the symbol table.
   if (fn->len == 0)
     backtrace_syminfo (state, pc, __go_syminfo_fnname_callback,
 		       error_callback, fn);
+#endif
 
   return c.file.len > 0;
 }

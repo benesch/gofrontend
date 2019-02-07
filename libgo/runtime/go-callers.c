@@ -193,10 +193,8 @@ alreadyInCallers()
 int32
 runtime_callers (int32 skip, Location *locbuf, int32 m, bool keep_thunks)
 {
-  return 0;
   struct callers_data data;
   struct backtrace_state* state;
-  int32 i;
 
   data.locbuf = locbuf;
   data.skip = skip + 1;
@@ -227,12 +225,15 @@ runtime_callers (int32 skip, Location *locbuf, int32 m, bool keep_thunks)
      no debug info; backtrace_syminfo will look at the symbol table to
      get the name.  This should only happen when tracing through code
      that is not written in Go and is not part of libgo.  */
+#if BACKTRACE_SUPPORTED
+  int32 i;
   for (i = 0; i < data.index; ++i)
     {
       if (locbuf[i].function.len == 0 && locbuf[i].pc != 0)
 	backtrace_syminfo (state, locbuf[i].pc, __go_syminfo_fnname_callback,
 			   error_callback, &locbuf[i].function);
     }
+#endif
 
   return data.index;
 }
