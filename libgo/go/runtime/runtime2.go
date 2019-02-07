@@ -360,10 +360,10 @@ type g struct {
 	// Not for gccgo: stackguard0 uintptr // offset known to liblink
 	// Not for gccgo: stackguard1 uintptr // offset known to liblink
 
-	_panic *_panic // innermost panic - offset known to liblink
-	_defer *_defer // innermost defer
-	m      *m      // current m; offset known to arm liblink
-	sched          gobuf
+	_panic    *_panic // innermost panic - offset known to liblink
+	_defer    *_defer // innermost defer
+	m         *m      // current m; offset known to arm liblink
+	sched     gobuf
 	syscallsp uintptr // if status==Gsyscall, syscallsp = sched.sp to use during gc
 	syscallpc uintptr // if status==Gsyscall, syscallpc = sched.pc to use during gc
 	// Not for gccgo: stktopsp       uintptr        // expected sp at top of stack, to check in traceback
@@ -460,7 +460,7 @@ type g struct {
 
 	traceback uintptr // stack traceback buffer
 
-	stackcontext [10]uintptr  // split-stack context
+	stackcontext [10]uintptr // split-stack context
 }
 
 type m struct {
@@ -781,9 +781,9 @@ type _defer struct {
 	arg unsafe.Pointer
 
 	// The return address that a recover thunk matches against.
-	// This is set by __go_set_defer_retaddr which is called by
+	// This is set by setdeferframeaddr which is called by
 	// the thunks created by defer statements.
-	retaddr uintptr
+	frameAddr uintptr
 
 	// Set to true if a function created by reflect.MakeFunc is
 	// permitted to recover.  The return address of such a

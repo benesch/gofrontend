@@ -2428,30 +2428,27 @@ Thunk_statement::build_thunk(Gogo* gogo, const std::string& thunk_name)
 
   gogo->start_block(location);
 
-  // For a defer statement, start with a call to
-  // __go_set_defer_retaddr.  */
-  Label* retaddr_label = NULL;
+  // For a defer statement, start with a call to setdeferframeaddr.
   if (may_call_recover)
     {
-      retaddr_label = gogo->add_label_reference("retaddr", location, false);
-      Expression* arg = Expression::make_label_addr(retaddr_label, location);
-      Expression* call = Runtime::make_call(Runtime::SETDEFERRETADDR,
-					    location, 1, arg);
-
-      // This is a hack to prevent the middle-end from deleting the
-      // label.
-      gogo->start_block(location);
-      gogo->add_statement(Statement::make_goto_statement(retaddr_label,
-							 location));
-      Block* then_block = gogo->finish_block(location);
-      then_block->determine_types();
-
-      Statement* s = Statement::make_if_statement(call, then_block, NULL,
-						  location);
+      static Named_object* builtin_frame_address;
+      if (builtin_frame_address == NULL)
+	builtin_frame_address =
+	  Gogo::declare_builtin_rf_address("__builtin_frame_address");
+      Expression* fn = Expression::make_func_reference(builtin_frame_address,
+						       NULL, location);
+      Expression* zexpr = Expression::make_integer_ul(0, NULL, location);
+      Expression_list *args = new Expression_list();
+      args->push_back(zexpr);
+      Expression* call = Expression::make_call(fn, args, false, location);
+      Type* uintptr_type = Type::lookup_integer_type("uintptr");
+      call = Expression::make_unsafe_cast(uintptr_type, call, location);
+      call = Runtime::make_call(Runtime::SETDEFERFRAMEADDR,
+				location, 1, call);
+      Statement* s = Statement::make_statement(call, false);
       s->determine_types();
       gogo->add_statement(s);
-
-      function->func_value()->set_calls_defer_retaddr();
+      function->func_value()->set_calls_defer_frameaddr();
     }
 
   // Get a reference to the parameter.

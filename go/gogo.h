@@ -1413,10 +1413,10 @@ class Function
   { this->has_recover_thunk_ = true; }
 
   // Record that this function is a thunk created for a defer
-  // statement that calls the __go_set_defer_retaddr runtime function.
+  // statement that calls the setdeferframeaddr runtime function.
   void
-  set_calls_defer_retaddr()
-  { this->calls_defer_retaddr_ = true; }
+  set_calls_defer_frameaddr()
+  { this->calls_defer_frameaddr_ = true; }
 
   // Whether this is a type hash or equality function created by the
   // compiler.
@@ -1584,8 +1584,8 @@ class Function
   // True if this function already has a recover thunk.
   bool has_recover_thunk_ : 1;
   // True if this is a thunk built for a defer statement that calls
-  // the __go_set_defer_retaddr runtime function.
-  bool calls_defer_retaddr_ : 1;
+  // the setdeferframeaddr runtime function.
+  bool calls_defer_frameaddr_ : 1;
   // True if this is a function built by the compiler to as a hash or
   // equality function for some type.
   bool is_type_specific_function_ : 1;

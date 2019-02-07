@@ -4476,15 +4476,15 @@ Build_recover_thunks::function(Named_object* orig_no)
 
 // Return the expression to pass for the .can_recover parameter to the
 // new function.  This indicates whether a call to recover may return
-// non-nil.  The expression is runtime.canrecover(__builtin_return_address()).
+// non-nil.  The expression is runtime.canrecover(__builtin_frame_address()).
 
 Expression*
 Build_recover_thunks::can_recover_arg(Location location)
 {
-  static Named_object* builtin_return_address;
-  if (builtin_return_address == NULL)
-    builtin_return_address =
-      Gogo::declare_builtin_rf_address("__builtin_return_address");
+  static Named_object* builtin_frame_address;
+  if (builtin_frame_address == NULL)
+    builtin_frame_address =
+      Gogo::declare_builtin_rf_address("__builtin_frame_address");
 
   Type* uintptr_type = Type::lookup_integer_type("uintptr");
   static Named_object* can_recover;
@@ -4504,12 +4504,12 @@ Build_recover_thunks::can_recover_arg(Location location)
       can_recover->func_declaration_value()->set_asm_name("runtime.canrecover");
     }
 
-  Expression* fn = Expression::make_func_reference(builtin_return_address,
+  Expression* fn = Expression::make_func_reference(builtin_frame_address,
 						   NULL, location);
 
-  Expression* zexpr = Expression::make_integer_ul(0, NULL, location);
+  Expression* oexpr = Expression::make_integer_ul(1, NULL, location);
   Expression_list *args = new Expression_list();
-  args->push_back(zexpr);
+  args->push_back(oexpr);
 
   Expression* call = Expression::make_call(fn, args, false, location);
   call = Expression::make_unsafe_cast(uintptr_type, call, location);
@@ -5129,7 +5129,7 @@ Function::Function(Function_type* type, Named_object* enclosing, Block* block,
     pragmas_(0), nested_functions_(0), is_sink_(false),
     results_are_named_(false), is_unnamed_type_stub_method_(false),
     calls_recover_(false), is_recover_thunk_(false), has_recover_thunk_(false),
-    calls_defer_retaddr_(false), is_type_specific_function_(false),
+    calls_defer_frameaddr_(false), is_type_specific_function_(false),
     in_unique_section_(false), export_for_inlining_(false),
     is_inline_only_(false)
 {
@@ -5834,12 +5834,12 @@ Function::get_or_make_decl(Gogo* gogo, Named_object* no)
       // our return address comparison.
       bool is_inlinable = !(this->calls_recover_ || this->is_recover_thunk_);
 
-      // If a function calls __go_set_defer_retaddr, then mark it as
+      // If a function calls setdeferframeaddr, then mark it as
       // uninlinable.  This prevents the GCC backend from splitting
       // the function; splitting the function is a bad idea because we
       // want the return address label to be in the same function as
       // the call.
-      if (this->calls_defer_retaddr_)
+      if (this->calls_defer_frameaddr_)
 	is_inlinable = false;
 
       // Check the //go:noinline compiler directive.

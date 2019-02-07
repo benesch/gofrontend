@@ -14,7 +14,7 @@ import (
 //
 //go:linkname deferproc runtime.deferproc
 //go:linkname deferreturn runtime.deferreturn
-//go:linkname setdeferretaddr runtime.setdeferretaddr
+//go:linkname setdeferframeaddr runtime.setdeferframeaddr
 //go:linkname checkdefer runtime.checkdefer
 //go:linkname gopanic runtime.gopanic
 //go:linkname canrecover runtime.canrecover
@@ -120,7 +120,7 @@ func deferproc(frame *bool, pfn uintptr, arg unsafe.Pointer) {
 	d.panicStack = getg()._panic
 	d.pfn = pfn
 	d.arg = arg
-	d.retaddr = 0
+	d.frameAddr = 0
 	d.makefunccanrecover = false
 }
 
@@ -212,7 +212,7 @@ func freedefer(d *_defer) {
 	d.frame = nil
 	d.panicStack = nil
 	d.arg = nil
-	d.retaddr = 0
+	d.frameAddr = 0
 	d.makefunccanrecover = false
 	// d._panic and d.pfn must be nil already.
 	// If not, we would have called freedeferpanic or freedeferfn above,
@@ -280,21 +280,13 @@ func deferreturn(frame *bool) {
 	}
 }
 
-// __builtin_extract_return_addr is a GCC intrinsic that converts an
-// address returned by __builtin_return_address(0) to a real address.
-// On most architectures this is a nop.
-//extern __builtin_extract_return_addr
-func __builtin_extract_return_addr(uintptr) uintptr
-
-// setdeferretaddr records the address to which the deferred function
-// returns.  This is check by canrecover.  The frontend relies on this
-// function returning false.
-func setdeferretaddr(retaddr uintptr) bool {
+// setdeferframeaddr records the address to which the deferred function
+// returns.  This is checked by canrecover.
+func setdeferframeaddr(frameAddr uintptr) {
 	gp := getg()
 	if gp._defer != nil {
-		gp._defer.retaddr = __builtin_extract_return_addr(retaddr)
+		gp._defer.frameAddr = frameAddr
 	}
-	return false
 }
 
 // checkdefer is called by exception handlers used when unwinding the
@@ -627,10 +619,10 @@ func currentDefer() *_defer {
 		return nil
 	}
 
-	// The deferred thunk will call setdeferretaddr. If this has
+	// The deferred thunk will call setdeferframeaddr. If this has
 	// not happened, then we have not been called via defer, and
 	// we can not recover.
-	if d.retaddr == 0 {
+	if d.frameAddr == 0 {
 		return nil
 	}
 
@@ -639,94 +631,15 @@ func currentDefer() *_defer {
 
 // canrecover is called by a thunk to see if the real function would
 // be permitted to recover a panic value. Recovering a value is
-// permitted if the thunk was called directly by defer. retaddr is the
-// return address of the function that is calling canrecover--that is,
-// the thunk.
-func canrecover(retaddr uintptr) bool {
+// permitted if the thunk was called directly by defer. frameaddr is the
+// stack frame address of the function that is calling canrecover--that
+// is, the thunk.
+func canrecover(frameAddr uintptr) bool {
 	d := currentDefer()
 	if d == nil {
 		return false
 	}
-
-	ret := __builtin_extract_return_addr(retaddr)
-	dret := d.retaddr
-	if ret <= dret && ret+16 >= dret {
-		return true
-	}
-
-	// On some systems, in some cases, the return address does not
-	// work reliably. See http://gcc.gnu.org/PR60406. If we are
-	// permitted to call recover, the call stack will look like this:
-	//     runtime.gopanic, runtime.deferreturn, etc.
-	//     thunk to call deferred function (calls __go_set_defer_retaddr)
-	//     function that calls __go_can_recover (passing return address)
-	//     runtime.canrecover
-	// Calling callers will skip the thunks. So if our caller's
-	// caller starts with "runtime.", then we are permitted to
-	// call recover.
-	var locs [16]location
-	if callers(1, locs[:2]) < 2 {
-		return false
-	}
-
-	name := locs[1].function
-	if hasPrefix(name, "runtime.") {
-		return true
-	}
-
-	// If the function calling recover was created by reflect.MakeFunc,
-	// then makefuncfficanrecover will have set makefunccanrecover.
-	if !d.makefunccanrecover {
-		return false
-	}
-
-	// We look up the stack, ignoring libffi functions and
-	// functions in the reflect package, until we find
-	// reflect.makeFuncStub or reflect.ffi_callback called by FFI
-	// functions.  Then we check the caller of that function.
-
-	n := callers(2, locs[:])
-	foundFFICallback := false
-	i := 0
-	for ; i < n; i++ {
-		name = locs[i].function
-		if name == "" {
-			// No function name means this caller isn't Go code.
-			// Assume that this is libffi.
-			continue
-		}
-
-		// Ignore function in libffi.
-		if hasPrefix(name, "ffi_") {
-			continue
-		}
-
-		if foundFFICallback {
-			break
-		}
-
-		if name == "reflect.ffi_callback" {
-			foundFFICallback = true
-			continue
-		}
-
-		// Ignore other functions in the reflect package.
-		if hasPrefix(name, "reflect.") || hasPrefix(name, ".1reflect.") {
-			continue
-		}
-
-		// We should now be looking at the real caller.
-		break
-	}
-
-	if i < n {
-		name = locs[i].function
-		if hasPrefix(name, "runtime.") {
-			return true
-		}
-	}
-
-	return false
+	return d.frameAddr == frameAddr
 }
 
 // This function is called when code is about to enter a function
