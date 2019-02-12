@@ -4840,7 +4840,8 @@ Parse::type_case_clause(const std::string& var_name, Expression* init,
 	  if (types.size() == 1)
 	    {
 	      type = types.front();
-	      init = Expression::make_type_guard(init, type, location);
+	      // The type conversion code will be installed during
+	      // lowering.
 	    }
 
 	  Variable* v = new Variable(type, init, false, false, false,

@@ -6998,6 +6998,17 @@ Variable::lower_init_expression(Gogo* gogo, Named_object* function,
 	}
       this->seen_ = true;
 
+      if (this->is_type_switch_var_ && this->type_ != NULL)
+      {
+	this->init_ = Expression::make_interface_info(this->init_, Expression::INTERFACE_INFO_OBJECT, this->location_);
+	if (this->type_->points_to() == NULL) {
+	  this->init_ = Expression::make_unsafe_cast(Type::make_pointer_type(this->type_), this->init_, this->location_);
+	  this->init_ = Expression::make_dereference(this->init_, Expression::NIL_CHECK_NOT_NEEDED, this->location_);
+	} else {
+	  this->init_ = Expression::make_unsafe_cast(this->type_, this->init_, this->location_);
+	}
+      }
+
       Statement_inserter global_inserter;
       if (this->is_global_)
 	{

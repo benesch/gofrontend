@@ -4055,11 +4055,12 @@ Type_case_clauses::Type_case_clause::lower(Type* switch_val_type,
 	cond = Expression::make_binary(OPERATOR_EQEQ, ref,
 				       Expression::make_nil(loc),
 				       loc);
+      else if (type->interface_type() == NULL)
+	cond = Expression::make_binary(OPERATOR_EQEQ,
+				       Expression::make_type_descriptor(type, loc),
+				       ref, loc);
       else
-	cond = Runtime::make_call((type->interface_type() == NULL
-				   ? Runtime::IFACETYPEEQ
-				   : Runtime::IFACET2IP),
-				  loc, 2,
+	cond = Runtime::make_call(Runtime::IFACET2IP, loc, 2,
 				  Expression::make_type_descriptor(type, loc),
 				  ref);
 
