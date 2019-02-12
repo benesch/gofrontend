@@ -11721,9 +11721,14 @@ String_index_expression::do_get_backend(Translate_context* context)
                                                      index, loc);
     }
 
+  Expression* length =
+    Expression::make_string_info(this->string_, STRING_INFO_LENGTH, loc);
+  Expression* bytes =
+    Expression::make_string_info(this->string_, STRING_INFO_DATA, loc);
+
   Expression* end = NULL;
   if (this->end_->is_nil_expression())
-    end = Expression::make_integer_sl(-1, int_type, loc);
+    end = length;
   else
     {
       Expression* bounds_check = Expression::check_bounds(this->end_, loc);
@@ -11732,14 +11737,48 @@ String_index_expression::do_get_backend(Translate_context* context)
       end = Expression::make_cast(int_type, this->end_, loc);
     }
 
-  Expression* strslice = Runtime::make_call(Runtime::STRING_SLICE, loc, 3,
-                                            string_arg, start, end);
-  Bexpression* bstrslice = strslice->get_backend(context);
+  Bexpression* bstart = start->get_backend(context);
+  Bexpression* bend = end->get_backend(context);
 
-  Btype* str_btype = strslice->type()->get_backend(gogo);
+  Expression* start_too_large =
+    Expression::make_binary(OPERATOR_GT, start, length, loc);
+  bad_index = Expression::make_binary(OPERATOR_OROR, start_too_large,
+                                      bad_index, loc);
+  Expression* end_too_large =
+    Expression::make_binary(OPERATOR_GT, end, length, loc);
+  bad_index = Expression::make_binary(OPERATOR_OROR, end_too_large,
+                                      bad_index, loc);
+  Expression* is_inverted =
+    Expression::make_binary(OPERATOR_GT, start, end, loc);
+  bad_index = Expression::make_binary(OPERATOR_OROR, is_inverted,
+                                      bad_index, loc);
+  Bexpression* result_length =
+    gogo->backend()->binary_expression(OPERATOR_MINUS, bend, bstart, loc);
+
+  // If the new length is zero, don't change val.  Otherwise we can
+  // get a pointer to the next object in memory, keeping it live
+  // unnecessarily.  When the capacity is zero, the actual pointer
+  // value doesn't matter.
+  Bexpression* zero =
+    Expression::make_integer_ul(0, int_type, loc)->get_backend(context);
+  Bexpression* cond =
+    gogo->backend()->binary_expression(OPERATOR_EQEQ, result_length, zero, loc);
+  Btype* int_btype = int_type->get_backend(gogo);
+  Bexpression* offset = gogo->backend()->conditional_expression(bfn, int_btype,
+								cond, zero,
+								bstart, loc);
+  Bexpression* val = bytes->get_backend(context);
+  val = gogo->backend()->pointer_offset_expression(val, offset, loc);
+
+  Btype* str_btype = this->type()->get_backend(gogo);
+  std::vector<Bexpression*> init;
+  init.push_back(val);
+  init.push_back(result_length);
+  Bexpression* ctor =
+    gogo->backend()->constructor_expression(str_btype, init, loc);
   Bexpression* index_error = bad_index->get_backend(context);
   return gogo->backend()->conditional_expression(bfn, str_btype, index_error,
-						 crash, bstrslice, loc);
+						 crash, ctor, loc);
 }
 
 // Dump ast representation for a string index expression.
