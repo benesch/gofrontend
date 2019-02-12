@@ -5740,7 +5740,7 @@ Binary_expression::lower_compare_to_memcmp(Gogo*, Statement_inserter* inserter)
 					       TYPE_INFO_SIZE);
 
   Expression* call = Runtime::make_call(Runtime::MEMCMP, loc, 3, a1, a2, len);
-  Expression* zero = Expression::make_integer_ul(0, NULL, loc);
+  Expression* zero = Expression::make_integer_ul(0, Type::lookup_integer_type("int32"), loc);
   return Expression::make_binary(this->op_, call, zero, loc);
 }
 
@@ -6673,8 +6673,22 @@ Expression::comparison(Translate_context* context, Type* result_type,
     {
       if (op == OPERATOR_EQEQ || op == OPERATOR_NOTEQ)
 	{
-	  left = Runtime::make_call(Runtime::EQSTRING, location, 2,
-				    left, right);
+	  Expression* len1 =
+	    Expression::make_string_info(left, STRING_INFO_LENGTH, location);
+	  Expression* len2 =
+	    Expression::make_string_info(right, STRING_INFO_LENGTH, location);
+	  Expression* data1 =
+	    Expression::make_string_info(left, STRING_INFO_DATA, location);
+	  Expression* data2 =
+	    Expression::make_string_info(right, STRING_INFO_DATA, location);
+
+	  Expression* len_eq = Expression::make_binary(OPERATOR_EQEQ, len1, len2, location);
+
+	  Expression* data_eq = Runtime::make_call(Runtime::MEMCMP, location, 3, data1, data2, len1);
+	  Expression* zexpr = Expression::make_integer_ul(0, Type::lookup_integer_type("int32"), location);
+	  data_eq = Expression::make_binary(OPERATOR_EQEQ, data_eq, zexpr, location);
+
+	  left = Expression::make_binary(OPERATOR_ANDAND, len_eq, data_eq, location);
 	  right = Expression::make_boolean(true, location);
 	}
       else
