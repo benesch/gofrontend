@@ -7000,12 +7000,16 @@ Variable::lower_init_expression(Gogo* gogo, Named_object* function,
 
       if (this->is_type_switch_var_ && this->type_ != NULL)
       {
-	this->init_ = Expression::make_interface_info(this->init_, Expression::INTERFACE_INFO_OBJECT, this->location_);
-	if (this->type_->points_to() == NULL) {
-	  this->init_ = Expression::make_unsafe_cast(Type::make_pointer_type(this->type_), this->init_, this->location_);
-	  this->init_ = Expression::make_dereference(this->init_, Expression::NIL_CHECK_NOT_NEEDED, this->location_);
+	if (this->type_->is_nil_constant_as_type()) {
+	  this->type_ = NULL;
 	} else {
-	  this->init_ = Expression::make_unsafe_cast(this->type_, this->init_, this->location_);
+	  this->init_ = Expression::make_interface_info(this->init_, Expression::INTERFACE_INFO_OBJECT, this->location_);
+	  if (this->type_->points_to() == NULL) {
+	    this->init_ = Expression::make_unsafe_cast(Type::make_pointer_type(this->type_), this->init_, this->location_);
+	    this->init_ = Expression::make_dereference(this->init_, Expression::NIL_CHECK_NOT_NEEDED, this->location_);
+	  } else {
+	    this->init_ = Expression::make_unsafe_cast(this->type_, this->init_, this->location_);
+	  }
 	}
       }
 
@@ -7228,15 +7232,15 @@ Variable::type()
   // type here.  This gets fixed up in determine_type, below.
   Type* type = this->type_;
   Expression* init = this->init_;
-  if (this->is_type_switch_var_
-      && type != NULL
-      && this->type_->is_nil_constant_as_type())
-    {
-      Type_guard_expression* tge = this->init_->type_guard_expression();
-      go_assert(tge != NULL);
-      init = tge->expr();
-      type = NULL;
-    }
+//   if (this->is_type_switch_var_
+//       && type != NULL
+//       && this->type_->is_nil_constant_as_type())
+//     {
+//       Type_guard_expression* tge = this->init_->type_guard_expression();
+//       go_assert(tge != NULL);
+//       init = tge->expr();
+//       type = NULL;
+//     }
 
   if (this->seen_)
     {
@@ -7303,15 +7307,15 @@ Variable::determine_type()
   // type here.  It will have an initializer which is a type guard.
   // We want to initialize it to the value without the type guard, and
   // use the type of that value as well.
-  if (this->is_type_switch_var_
-      && this->type_ != NULL
-      && this->type_->is_nil_constant_as_type())
-    {
-      Type_guard_expression* tge = this->init_->type_guard_expression();
-      go_assert(tge != NULL);
-      this->type_ = NULL;
-      this->init_ = tge->expr();
-    }
+//   if (this->is_type_switch_var_
+//       && this->type_ != NULL
+//       && this->type_->is_nil_constant_as_type())
+//     {
+//       Type_guard_expression* tge = this->init_->type_guard_expression();
+//       go_assert(tge != NULL);
+//       this->type_ = NULL;
+//       this->init_ = tge->expr();
+//     }
 
   if (this->init_ == NULL)
     go_assert(this->type_ != NULL && !this->type_->is_abstract());
