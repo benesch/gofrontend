@@ -219,27 +219,29 @@ am_libgotool_a_OBJECTS =
 libgotool_a_OBJECTS = $(am_libgotool_a_OBJECTS)
 LTLIBRARIES = $(toolexeclib_LTLIBRARIES)
 @LIBGO_IS_LINUX_TRUE@am__DEPENDENCIES_1 = syscall/clone_linux.lo
-@LIBGO_IS_X86_TRUE@am__DEPENDENCIES_2 =  \
+@LIBGO_IS_NETBSD_TRUE@am__DEPENDENCIES_2 = syscall/shim_netbsd.lo
+@LIBGO_IS_X86_TRUE@am__DEPENDENCIES_3 =  \
 @LIBGO_IS_X86_TRUE@	golang.org/x/sys/cpu_gccgo_x86.lo
-am__DEPENDENCIES_3 = $(addsuffix .lo,$(PACKAGES)) \
+am__DEPENDENCIES_4 = $(addsuffix .lo,$(PACKAGES)) \
 	internal/bytealg/bytealg.lo reflect/makefunc_ffi_c.lo \
-	$(am__DEPENDENCIES_1) syscall/errno.lo syscall/signame.lo \
-	syscall/wait.lo $(golangorg_x_net_lif_lo) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2) syscall/errno.lo \
+	syscall/signame.lo syscall/wait.lo $(golangorg_x_net_lif_lo) \
 	$(golangorg_x_net_route_lo) log/syslog/syslog_c.lo \
 	runtime/internal/atomic_c.lo sync/atomic_c.lo \
-	internal/cpu/cpu_gccgo.lo $(am__DEPENDENCIES_2)
-am__DEPENDENCIES_4 =
-am__DEPENDENCIES_5 = $(am__DEPENDENCIES_3) \
-	../libbacktrace/libbacktrace.la $(am__DEPENDENCIES_4) \
-	$(am__DEPENDENCIES_4) $(am__DEPENDENCIES_4) \
-	$(am__DEPENDENCIES_4) $(am__DEPENDENCIES_4)
-libgo_llgo_la_DEPENDENCIES = $(am__DEPENDENCIES_5)
+	internal/cpu/cpu_gccgo.lo $(am__DEPENDENCIES_3)
+am__DEPENDENCIES_5 =
+am__DEPENDENCIES_6 = $(am__DEPENDENCIES_4) \
+	../libbacktrace/libbacktrace.la $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_5) \
+	$(am__DEPENDENCIES_5) $(am__DEPENDENCIES_5)
+libgo_llgo_la_DEPENDENCIES = $(am__DEPENDENCIES_6)
 @LIBGO_IS_LINUX_TRUE@@LIBGO_IS_X86_TRUE@am__objects_1 =  \
 @LIBGO_IS_LINUX_TRUE@@LIBGO_IS_X86_TRUE@	runtime/go-context.lo
 am__objects_2 = $(am__objects_1)
 @LIBGO_IS_RTEMS_TRUE@am__objects_3 =  \
 @LIBGO_IS_RTEMS_TRUE@	runtime/rtems-task-variable-add.lo
-am__objects_4 = runtime/aeshash.lo runtime/go-assert.lo \
+@LIBGO_IS_NETBSD_TRUE@am__objects_4 = runtime/netbsd-syscall.lo
+am__objects_5 = runtime/aeshash.lo runtime/go-assert.lo \
 	runtime/go-caller.lo runtime/go-callers.lo runtime/go-cdiv.lo \
 	runtime/go-cgo.lo runtime/go-construct-map.lo \
 	runtime/go-ffi.lo runtime/go-fieldtrack.lo \
@@ -252,8 +254,8 @@ am__objects_4 = runtime/aeshash.lo runtime/go-assert.lo \
 	runtime/go-varargs.lo runtime/env_posix.lo runtime/panic.lo \
 	runtime/print.lo runtime/proc.lo runtime/runtime_c.lo \
 	runtime/stack.lo runtime/yield.lo $(am__objects_2) \
-	$(am__objects_3)
-am_libgo_llgo_la_OBJECTS = $(am__objects_4)
+	$(am__objects_3) $(am__objects_4)
+am_libgo_llgo_la_OBJECTS = $(am__objects_5)
 libgo_llgo_la_OBJECTS = $(am_libgo_llgo_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -263,8 +265,8 @@ libgo_llgo_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(libgo_llgo_la_LDFLAGS) $(LDFLAGS) -o $@
 @GOC_IS_LLGO_TRUE@am_libgo_llgo_la_rpath = -rpath $(toolexeclibdir)
-libgo_la_DEPENDENCIES = $(am__DEPENDENCIES_5)
-am_libgo_la_OBJECTS = $(am__objects_4)
+libgo_la_DEPENDENCIES = $(am__DEPENDENCIES_6)
+am_libgo_la_OBJECTS = $(am__objects_5)
 libgo_la_OBJECTS = $(am_libgo_la_OBJECTS)
 libgo_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -887,6 +889,8 @@ noinst_DATA = golang.org/x/net/nettest.gox internal/cfg.gox \
 @LIBGO_IS_RTEMS_FALSE@rtems_task_variable_add_file = 
 @LIBGO_IS_RTEMS_TRUE@rtems_task_variable_add_file = runtime/rtems-task-variable-add.c
 runtime_context_asm_file = $(am__append_3)
+@LIBGO_IS_NETBSD_FALSE@runtime_netbsd_syscall_file = 
+@LIBGO_IS_NETBSD_TRUE@runtime_netbsd_syscall_file = runtime/netbsd-syscall.c
 runtime_files = \
 	runtime/aeshash.c \
 	runtime/go-assert.c \
@@ -918,7 +922,8 @@ runtime_files = \
 	runtime/stack.c \
 	runtime/yield.c \
 	$(runtime_context_asm_file) \
-	$(rtems_task_variable_add_file)
+	$(rtems_task_variable_add_file) \
+	$(runtime_netbsd_syscall_file)
 
 GCCGO_INSTALL_NAME := $(shell echo gccgo|sed '$(program_transform_name)')
 GCC_INSTALL_NAME := $(shell echo gcc|sed '$(program_transform_name)')
@@ -931,6 +936,8 @@ SYSINFO_FLAGS = \
 
 @LIBGO_IS_LINUX_FALSE@syscall_lib_clone_lo = 
 @LIBGO_IS_LINUX_TRUE@syscall_lib_clone_lo = syscall/clone_linux.lo
+@LIBGO_IS_NETBSD_FALSE@syscall_shim_netbsd_lo = 
+@LIBGO_IS_NETBSD_TRUE@syscall_shim_netbsd_lo = syscall/shim_netbsd.lo
 @LIBGO_IS_X86_FALSE@golangorg_x_sys_cpu_gccgo_x86_lo = 
 @LIBGO_IS_X86_TRUE@golangorg_x_sys_cpu_gccgo_x86_lo = golang.org/x/sys/cpu_gccgo_x86.lo
 PACKAGES = $(shell cat $(srcdir)/libgo-packages.txt)
@@ -939,6 +946,7 @@ libgo_go_objs = \
 	internal/bytealg/bytealg.lo \
 	reflect/makefunc_ffi_c.lo \
 	$(syscall_lib_clone_lo) \
+	$(syscall_shim_netbsd_lo) \
 	syscall/errno.lo \
 	syscall/signame.lo \
 	syscall/wait.lo \
@@ -1149,7 +1157,7 @@ extra_check_libs_cmd_vet_internal_cfg = $(abs_builddir)/libgotool.a
 @HAVE_STAT_TIMESPEC_TRUE@@LIBGO_IS_SOLARIS_TRUE@matchargs_os = --tag=solaristag
 @LIBGO_IS_SOLARIS_FALSE@matchargs_os = 
 @LIBGO_IS_BSD_TRUE@golangorg_x_net_route_lo = \
-@LIBGO_IS_BSD_TRUE@	golang.org/net/route.lo
+@LIBGO_IS_BSD_TRUE@	golang.org/x/net/route.lo
 
 @LIBGO_IS_SOLARIS_TRUE@golangorg_x_net_lif_lo = \
 @LIBGO_IS_SOLARIS_TRUE@	golang.org/x/net/lif.lo
@@ -1390,6 +1398,8 @@ runtime/go-context.lo: runtime/$(am__dirstamp) \
 	runtime/$(DEPDIR)/$(am__dirstamp)
 runtime/rtems-task-variable-add.lo: runtime/$(am__dirstamp) \
 	runtime/$(DEPDIR)/$(am__dirstamp)
+runtime/netbsd-syscall.lo: runtime/$(am__dirstamp) \
+	runtime/$(DEPDIR)/$(am__dirstamp)
 
 libgo-llgo.la: $(libgo_llgo_la_OBJECTS) $(libgo_llgo_la_DEPENDENCIES) $(EXTRA_libgo_llgo_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(libgo_llgo_la_LINK) $(am_libgo_llgo_la_rpath) $(libgo_llgo_la_OBJECTS) $(libgo_llgo_la_LIBADD) $(LIBS)
@@ -1432,6 +1442,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@runtime/$(DEPDIR)/libgobegin_a-go-main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@runtime/$(DEPDIR)/libgobegin_llgo_a-go-main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@runtime/$(DEPDIR)/libgolibbegin_a-go-libmain.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@runtime/$(DEPDIR)/netbsd-syscall.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@runtime/$(DEPDIR)/panic.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@runtime/$(DEPDIR)/print.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@runtime/$(DEPDIR)/proc.Plo@am__quote@
@@ -2766,7 +2777,7 @@ s-zdefaultcc: Makefile
 	echo 'const DefaultPkgConfig = "pkg-config"' >> zdefaultcc.go.tmp
 	echo 'var OSArchSupportsCgo = map[string]bool{}' >> zdefaultcc.go.tmp
 	$(SHELL) $(srcdir)/../move-if-change zdefaultcc.go.tmp zdefaultcc.go
-	$(STAMP) $@ 
+	$(STAMP) $@
 
 # Post-process runtime.inc.raw (raw output of -fgo-c-header option when
 # compiling runtime) to prune out certain types that should not be
@@ -2949,6 +2960,9 @@ syscall/clone_linux.lo: go/syscall/clone_linux.c runtime.inc
 syscall/errno.lo: go/syscall/errno.c runtime.inc
 	@$(MKDIR_P) syscall
 	$(LTCOMPILE) -c -o $@ $(srcdir)/go/syscall/errno.c
+syscall/shim_netbsd.lo: go/syscall/shim_netbsd.c runtime.inc
+	@$(MKDIR_P) syscall
+	$(LTCOMPILE) -c -o $@ $(srcdir)/go/syscall/shim_netbsd.c
 syscall/signame.lo: go/syscall/signame.c runtime.inc
 	@$(MKDIR_P) syscall
 	$(LTCOMPILE) -c -o $@ $(srcdir)/go/syscall/signame.c

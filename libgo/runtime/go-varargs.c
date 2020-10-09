@@ -124,7 +124,7 @@ __go_syscall6(uintptr_t flag, uintptr_t a1, uintptr_t a2, uintptr_t a3,
 long
 __go_ptrace(int request, pid_t pid, uintptr_t addr, uintptr_t data)
 {
-  return ptrace (request, pid, addr, data);
+  return ptrace (request, pid, (void *) addr, data);
 }
 
 #endif

@@ -63,13 +63,13 @@ func interfaceTable(ifindex int) ([]Interface, error) {
 
 	var ift []Interface
 	for len(tab) > 0 {
-		ifm := (*syscall.IfMsgHdr)(unsafe.Pointer(&tab[0]))
+		ifm := (*syscall.IfMsghdr)(unsafe.Pointer(&tab[0]))
 		if ifm.Msglen == 0 {
 			break
 		}
 		if ifm.Type == syscall.RTM_IFINFO {
 			if ifindex == 0 || ifindex == int(ifm.Index) {
-				sdl := (*rawSockaddrDatalink)(unsafe.Pointer(&tab[unsafe.Sizeof(syscall.IfMsgHdr)]))
+				sdl := (*rawSockaddrDatalink)(unsafe.Pointer(&tab[unsafe.Sizeof(syscall.IfMsghdr)]))
 
 				ifi := &Interface{Index: int(ifm.Index), Flags: linkFlags(ifm.Flags)}
 				ifi.Name = string(sdl.Data[:sdl.Nlen])
@@ -127,14 +127,14 @@ func interfaceAddrTable(ifi *Interface) ([]Addr, error) {
 
 	var ifat []Addr
 	for len(tab) > 0 {
-		ifm := (*syscall.IfMsgHdr)(unsafe.Pointer(&tab[0]))
+		ifm := (*syscall.IfMsghdr)(unsafe.Pointer(&tab[0]))
 		if ifm.Msglen == 0 {
 			break
 		}
 		if ifm.Type == syscall.RTM_NEWADDR {
 			if ifi == nil || ifi.Index == int(ifm.Index) {
 				mask := ifm.Addrs
-				off := uint(unsafe.Sizeof(syscall.IfMsgHdr))
+				off := uint(unsafe.Sizeof(syscall.IfMsghdr))
 
 				var iprsa, nmrsa *syscall.RawSockaddr
 				for i := uint(0); i < _RTAX_MAX; i++ {

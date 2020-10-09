@@ -434,6 +434,12 @@ runtime_context_asm_file += runtime/go-context.S
 endif
 endif
 
+if LIBGO_IS_NETBSD
+runtime_netbsd_syscall_file = runtime/netbsd-syscall.c
+else
+runtime_netbsd_syscall_file =
+endif
+
 runtime_files = \
 	runtime/aeshash.c \
 	runtime/go-assert.c \
@@ -465,7 +471,8 @@ runtime_files = \
 	runtime/stack.c \
 	runtime/yield.c \
 	$(runtime_context_asm_file) \
-	$(rtems_task_variable_add_file)
+	$(rtems_task_variable_add_file) \
+	$(runtime_netbsd_syscall_file)
 
 version.go: s-version; @true
 s-version: Makefile
@@ -600,7 +607,7 @@ s-zdefaultcc: Makefile
 	echo 'const DefaultPkgConfig = "pkg-config"' >> zdefaultcc.go.tmp
 	echo 'var OSArchSupportsCgo = map[string]bool{}' >> zdefaultcc.go.tmp
 	$(SHELL) $(srcdir)/../move-if-change zdefaultcc.go.tmp zdefaultcc.go
-	$(STAMP) $@ 
+	$(STAMP) $@
 
 # Post-process runtime.inc.raw (raw output of -fgo-c-header option when
 # compiling runtime) to prune out certain types that should not be
@@ -711,6 +718,12 @@ else
 syscall_lib_clone_lo =
 endif
 
+if LIBGO_IS_NETBSD
+syscall_shim_netbsd_lo = syscall/shim_netbsd.lo
+else
+syscall_shim_netbsd_lo =
+endif
+
 if LIBGO_IS_X86
 golangorg_x_sys_cpu_gccgo_x86_lo = golang.org/x/sys/cpu_gccgo_x86.lo
 else
@@ -724,6 +737,7 @@ libgo_go_objs = \
 	internal/bytealg/bytealg.lo \
 	reflect/makefunc_ffi_c.lo \
 	$(syscall_lib_clone_lo) \
+	$(syscall_shim_netbsd_lo) \
 	syscall/errno.lo \
 	syscall/signame.lo \
 	syscall/wait.lo \
@@ -826,7 +840,7 @@ BUILDGOX = \
 	$(SHELL) $(srcdir)/mvifdiff.sh $@.tmp `echo $@ | sed -e 's/s-gox/gox/'`
 
 GOTESTFLAGS =
-GOBENCH = 
+GOBENCH =
 
 # Check a package.
 CHECK = \
@@ -1054,6 +1068,9 @@ syscall/clone_linux.lo: go/syscall/clone_linux.c runtime.inc
 syscall/errno.lo: go/syscall/errno.c runtime.inc
 	@$(MKDIR_P) syscall
 	$(LTCOMPILE) -c -o $@ $(srcdir)/go/syscall/errno.c
+syscall/shim_netbsd.lo: go/syscall/shim_netbsd.c runtime.inc
+	@$(MKDIR_P) syscall
+	$(LTCOMPILE) -c -o $@ $(srcdir)/go/syscall/shim_netbsd.c
 syscall/signame.lo: go/syscall/signame.c runtime.inc
 	@$(MKDIR_P) syscall
 	$(LTCOMPILE) -c -o $@ $(srcdir)/go/syscall/signame.c
@@ -1090,7 +1107,7 @@ if LIBGO_IS_BSD
 $(eval $(call PACKAGE_template,golang.org/x/net/route))
 
 golangorg_x_net_route_lo = \
-	golang.org/net/route.lo
+	golang.org/x/net/route.lo
 
 endif
 
